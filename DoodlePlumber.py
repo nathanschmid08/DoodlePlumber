@@ -7,7 +7,7 @@ import math
 pygame.init()
 WIDTH, HEIGHT = 400, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Climb High")
+pygame.display.set_caption("DoodlePlumber")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 20, bold=True)
 big_font = pygame.font.SysFont("Arial", 32, bold=True)
@@ -51,8 +51,6 @@ player_animation_frame = 0
 coins = []
 power_ups = []
 coin_count = 0
-bounce_platforms = []
-moving_platforms = []
 particle_effects = []
 
 # Wolken für Hintergrund
@@ -64,7 +62,25 @@ for i in range(8):
     speed = random.uniform(0.2, 0.8)
     clouds.append({'x': x, 'y': y, 'size': size, 'speed': speed})
 
-# Plattformen
+# Plattformen mit Typen
+class Platform:
+    def __init__(self, x, y, width, height, platform_type="normal"):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.type = platform_type
+        self.original_x = x
+        self.move_range = 100  # Maximale Bewegungsreichweite
+        self.move_speed = 1  # Geschwindigkeit der Bewegung
+        self.direction = 1  # Richtung der Bewegung: 1 = rechts, -1 = links
+    
+    def update(self, time_counter):
+        if self.type == "moving":
+            # Bewegung basierend auf der Richtung
+            self.rect.x += self.move_speed * self.direction
+            
+            # Wechsel der Richtung, wenn die Plattform die Grenzen erreicht
+            if self.rect.x > self.original_x + self.move_range or self.rect.x < self.original_x - self.move_range:
+                self.direction *= -1
+
 platforms = []
 score = 0
 high_score = 0
@@ -254,41 +270,41 @@ def draw_enhanced_mario():
 
 def draw_enhanced_platforms():
     """Zeichne verschiedene Plattform-Typen"""
-    for i, platform in enumerate(platforms):
+    for platform in platforms:
         # Schatten
-        shadow_rect = pygame.Rect(platform.x + 2, platform.y + 2, platform.width, platform.height)
+        shadow_rect = pygame.Rect(platform.rect.x + 2, platform.rect.y + 2, platform.rect.width, platform.rect.height)
         pygame.draw.rect(screen, SHADOW_GRAY, shadow_rect)
         
-        # Bestimme Plattform-Typ
-        if i in bounce_platforms:
-            # Sprungfeder-Plattform
-            pygame.draw.rect(screen, PLATFORM_SPECIAL, platform)
-            pygame.draw.rect(screen, UI_BLACK, platform, 2)
+        # Bestimme Plattform-Typ und zeichne entsprechend
+        if platform.type == "bounce":
+            # Sprungfeder-Plattform (Gold)
+            pygame.draw.rect(screen, PLATFORM_SPECIAL, platform.rect)
+            pygame.draw.rect(screen, UI_BLACK, platform.rect, 2)
             # Sprungfeder-Symbol
-            spring_x = platform.centerx
-            pygame.draw.line(screen, UI_BLACK, (spring_x - 10, platform.y + 5), (spring_x + 10, platform.y + 5), 3)
-            pygame.draw.line(screen, UI_BLACK, (spring_x - 8, platform.y + 8), (spring_x + 8, platform.y + 8), 2)
-            pygame.draw.line(screen, UI_BLACK, (spring_x - 6, platform.y + 11), (spring_x + 6, platform.y + 11), 2)
-        elif i in moving_platforms:
-            # Bewegliche Plattform
-            pygame.draw.rect(screen, (100, 100, 255), platform)
-            pygame.draw.rect(screen, UI_BLACK, platform, 2)
+            spring_x = platform.rect.centerx
+            pygame.draw.line(screen, UI_BLACK, (spring_x - 10, platform.rect.y + 5), (spring_x + 10, platform.rect.y + 5), 3)
+            pygame.draw.line(screen, UI_BLACK, (spring_x - 8, platform.rect.y + 8), (spring_x + 8, platform.rect.y + 8), 2)
+            pygame.draw.line(screen, UI_BLACK, (spring_x - 6, platform.rect.y + 11), (spring_x + 6, platform.rect.y + 11), 2)
+        elif platform.type == "moving":
+            # Bewegliche Plattform (Blau)
+            pygame.draw.rect(screen, (100, 100, 255), platform.rect)
+            pygame.draw.rect(screen, UI_BLACK, platform.rect, 2)
             # Pfeil-Symbole
-            pygame.draw.polygon(screen, UI_WHITE, [(platform.x + 10, platform.centery), 
-                                                 (platform.x + 20, platform.centery - 5), 
-                                                 (platform.x + 20, platform.centery + 5)])
-            pygame.draw.polygon(screen, UI_WHITE, [(platform.right - 10, platform.centery), 
-                                                 (platform.right - 20, platform.centery - 5), 
-                                                 (platform.right - 20, platform.centery + 5)])
+            pygame.draw.polygon(screen, UI_WHITE, [(platform.rect.x + 10, platform.rect.centery), 
+                                                 (platform.rect.x + 20, platform.rect.centery - 5), 
+                                                 (platform.rect.x + 20, platform.rect.centery + 5)])
+            pygame.draw.polygon(screen, UI_WHITE, [(platform.rect.right - 10, platform.rect.centery), 
+                                                 (platform.rect.right - 20, platform.rect.centery - 5), 
+                                                 (platform.rect.right - 20, platform.rect.centery + 5)])
         else:
-            # Normale Plattform
-            pygame.draw.rect(screen, PLATFORM_GREEN, platform)
-            pygame.draw.rect(screen, PLATFORM_DARK, platform, 2)
+            # Normale Plattform (Grün)
+            pygame.draw.rect(screen, PLATFORM_GREEN, platform.rect)
+            pygame.draw.rect(screen, PLATFORM_DARK, platform.rect, 2)
             
             # Gras-Textur
-            for grass_x in range(platform.x + 5, platform.right - 5, 8):
-                pygame.draw.line(screen, (60, 179, 60), (grass_x, platform.y), (grass_x, platform.y - 3), 2)
-                pygame.draw.line(screen, (60, 179, 60), (grass_x + 2, platform.y), (grass_x + 2, platform.y - 2), 1)
+            for grass_x in range(platform.rect.x + 5, platform.rect.right - 5, 8):
+                pygame.draw.line(screen, (60, 179, 60), (grass_x, platform.rect.y), (grass_x, platform.rect.y - 3), 2)
+                pygame.draw.line(screen, (60, 179, 60), (grass_x + 2, platform.rect.y), (grass_x + 2, platform.rect.y - 2), 1)
 
 def draw_enhanced_ui():
     """Zeichne verbessertes UI mit Münzen"""
@@ -363,7 +379,7 @@ def draw_game_over():
     screen.blit(game_over_text, game_over_rect)
     
     # Statistiken Box
-    stats_y = HEIGHT//2 - 20
+    stats_y = HEIGHT//2 - 20  # Startpunkt der Statistiken weiter nach unten setzen
     stats = [
         f"Final Score: {int(score)}",
         f"Coins Collected: {coin_count}",
@@ -372,7 +388,7 @@ def draw_game_over():
     
     for i, stat in enumerate(stats):
         stat_text = font.render(stat, True, UI_BLACK)
-        stat_rect = stat_text.get_rect(center=(WIDTH//2, stats_y + i * 25))
+        stat_rect = stat_text.get_rect(center=(WIDTH//2, stats_y + i * 40))  # Abstand zwischen den Statistiken erhöhen
         stat_bg = pygame.Rect(stat_rect.x - 10, stat_rect.y - 5, stat_rect.width + 20, stat_rect.height + 10)
         pygame.draw.rect(screen, UI_WHITE, stat_bg)
         pygame.draw.rect(screen, UI_BLACK, stat_bg, 2)
@@ -380,21 +396,20 @@ def draw_game_over():
 
 def spawn_collectibles():
     """Spawne Münzen und Power-Ups auf Plattformen"""
-    for i, platform in enumerate(platforms):
-        if random.randint(1, 100) < 3:  # 3% Chance für Münze
-            coin_x = random.randint(platform.x + 10, platform.right - 10)
-            coin_y = platform.y - 20
-            coins.append(Coin(coin_x, coin_y))
+    for platform in platforms:
+        # Überprüfe, ob bereits Münzen in der Nähe sind
+        has_nearby_coin = any(abs(coin.x - platform.rect.centerx) < 50 and abs(coin.y - platform.rect.y) < 50 for coin in coins)
         
-        if random.randint(1, 100) < 1:  # 1% Chance für Power-Up
-            power_x = random.randint(platform.x + 10, platform.right - 10)
-            power_y = platform.y - 25
-            power_ups.append(PowerUp(power_x, power_y))
+        # Spawne Münzen mit einer höheren Wahrscheinlichkeit
+        if not has_nearby_coin and random.randint(1, 100) <= 5:  # 5% Chance für Münze
+            coin_x = random.randint(platform.rect.x + 10, platform.rect.right - 10)
+            coin_y = platform.rect.y - 20
+            coins.append(Coin(coin_x, coin_y))
 
 def reset_game():
     """Spiel zurücksetzen"""
     global player, player_vy, platforms, score, coins, power_ups, coin_count
-    global bounce_platforms, moving_platforms, particle_effects
+    global particle_effects
     
     player.x = WIDTH // 2 - player_width // 2
     player_vy = 0
@@ -405,27 +420,29 @@ def reset_game():
     coins.clear()
     power_ups.clear()
     particle_effects.clear()
-    bounce_platforms.clear()
-    moving_platforms.clear()
     
-    # Startplattform
-    start_platform = pygame.Rect(WIDTH // 2 - 60, HEIGHT - 60, 120, 20)
+    # Startplattform (normal)
+    start_platform = Platform(WIDTH // 2 - 60, HEIGHT - 60, 120, 20, "normal")
     platforms.append(start_platform)
     
-    player.y = start_platform.y - player.height
+    player.y = start_platform.rect.y - player.height
     
     # Weitere Plattformen mit verschiedenen Typen
     for i in range(1, 8):
         x = random.randint(0, WIDTH - 100)
         y = HEIGHT - i * 80
         width = random.randint(80, 120)
-        platforms.append(pygame.Rect(x, y, width, 20))
         
-        # Spezielle Plattformen
-        if random.randint(1, 10) < 3:  # 30% Chance für Sprungfeder
-            bounce_platforms.append(i)
-        elif random.randint(1, 10) < 2:  # 20% Chance für bewegliche Plattform
-            moving_platforms.append(i)
+        # Bestimme Plattform-Typ
+        rand = random.randint(1, 10)
+        if rand <= 2:  # 20% Chance für Sprungfeder
+            platform_type = "bounce"
+        elif rand <= 3:  # 10% Chance für bewegliche Plattform
+            platform_type = "moving"
+        else:  # 70% normale Plattformen
+            platform_type = "normal"
+        
+        platforms.append(Platform(x, y, width, 20, platform_type))
 
 # Spiel initialisieren
 reset_game()
@@ -468,12 +485,9 @@ while running:
         elif player.left > WIDTH:
             player.right = 0
         
-        # Bewegliche Plattformen
-        for i in moving_platforms:
-            if i < len(platforms):
-                platform = platforms[i]
-                platform.x += math.sin(time_counter * 0.05 + i) * 2
-                platform.x = max(0, min(WIDTH - platform.width, platform.x))
+        # Plattformen aktualisieren (bewegliche Plattformen)
+        for platform in platforms:
+            platform.update(time_counter)
         
         # Physik
         player_vy += gravity
@@ -481,11 +495,11 @@ while running:
         
         # Plattform-Kollision
         if player_vy > 0:
-            for i, platform in enumerate(platforms):
-                if player.colliderect(platform) and player.bottom <= platform.bottom + player_vy:
-                    player.bottom = platform.top
+            for platform in platforms:
+                if player.colliderect(platform.rect) and player.bottom <= platform.rect.bottom + player_vy:
+                    player.bottom = platform.rect.top
                     
-                    if i in bounce_platforms:
+                    if platform.type == "bounce":
                         player_vy = jump_strength * 1.5  # Stärkerer Sprung
                         create_jump_particles(player.centerx, player.bottom)
                     else:
@@ -531,7 +545,8 @@ while running:
             score += offset * 0.1
             
             for platform in platforms:
-                platform.y += offset
+                platform.rect.y += offset
+                platform.original_x = platform.rect.x  # Update für bewegliche Plattformen
             
             for coin in coins:
                 coin.y += offset
@@ -539,31 +554,32 @@ while running:
             for power_up in power_ups:
                 power_up.y += offset
         
-        # Neue Plattformen und Collectibles
+        # Neue Plattformen
         while len(platforms) < 12:
-            last_y = min(p.y for p in platforms)
+            last_y = min(p.rect.y for p in platforms)
             new_x = random.randint(0, WIDTH - 120)
             new_y = last_y - random.randint(60, 100)
             width = random.randint(80, 120)
-            platforms.append(pygame.Rect(new_x, new_y, width, 20))
             
-            # Spezielle Plattformen
-            new_index = len(platforms) - 1
-            if random.randint(1, 10) < 3:
-                bounce_platforms.append(new_index)
-            elif random.randint(1, 10) < 2:
-                moving_platforms.append(new_index)
+            # Bestimme Plattform-Typ für neue Plattformen
+            rand = random.randint(1, 10)
+            if rand <= 2:  # 20% Chance für Sprungfeder
+                platform_type = "bounce"
+            elif rand <= 3:  # 10% Chance für bewegliche Plattform
+                platform_type = "moving"
+            else:  # 70% normale Plattformen
+                platform_type = "normal"
+            
+            platforms.append(Platform(new_x, new_y, width, 20, platform_type))
         
-        spawn_collectibles()
+        # Spawne Collectibles nur gelegentlich
+        if time_counter % 60 == 0:  # Nur einmal pro Sekunde prüfen
+            spawn_collectibles()
         
         # Objekte entfernen die zu weit unten sind
-        platforms = [p for p in platforms if p.y < HEIGHT + 50]
+        platforms = [p for p in platforms if p.rect.y < HEIGHT + 50]
         coins = [c for c in coins if c.y < HEIGHT + 100]
         power_ups = [p for p in power_ups if p.y < HEIGHT + 100]
-
-        # Indices für spezielle Plattformen aktualisieren
-        bounce_platforms = [i for i in bounce_platforms if i < len(platforms)]
-        moving_platforms = [i for i in moving_platforms if i < len(platforms)]   
              
         # Game Over
         if player.top > HEIGHT:
@@ -593,6 +609,22 @@ while running:
     
     elif game_state == GAME_OVER:
         draw_game_over()
+        
+        # Restart Button
+        restart_text = font.render("Press SPACE to Play Again", True, UI_BLACK)
+        restart_rect = restart_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 100))
+        restart_bg = pygame.Rect(restart_rect.x - 10, restart_rect.y - 5, restart_rect.width + 20, restart_rect.height + 10)
+        pygame.draw.rect(screen, UI_WHITE, restart_bg)
+        pygame.draw.rect(screen, UI_BLACK, restart_bg, 2)
+        screen.blit(restart_text, restart_rect)
+        
+        # Menu Button
+        menu_text = font.render("Press ESC for Menu", True, UI_BLACK)
+        menu_rect = menu_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 150))  # Abstand erhöht (von 130 auf 150)
+        menu_bg = pygame.Rect(menu_rect.x - 10, menu_rect.y - 5, menu_rect.width + 20, menu_rect.height + 10)
+        pygame.draw.rect(screen, UI_WHITE, menu_bg)
+        pygame.draw.rect(screen, UI_BLACK, menu_bg, 2)
+        screen.blit(menu_text, menu_rect)
     
     pygame.display.flip()
 
