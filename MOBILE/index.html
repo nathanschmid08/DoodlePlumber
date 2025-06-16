@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DoodlePlumber - Mobile Jump Game</title>
+    <link rel="stylesheet" href="style.css">    
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="game-ui" id="gameUI">
+            <div>Score: <span id="scoreDisplay">0</span></div>
+            <div>Best: <span id="highScoreDisplay">0</span></div>
+            <div class="coin-display">Coins: <span id="coinDisplay">0</span></div>
+        </div>
+
+        <div class="menu-screen" id="menuScreen">
+            <div class="title">CLIMB HIGH</div>
+            <div class="button pulse" id="startBtn">Tippen zum Starten</div>
+        </div>
+
+        <div class="game-over-screen hidden" id="gameOverScreen">
+            <div class="title">GAME OVER</div>
+            <div class="stats">
+                <div>Final Score: <span id="finalScore">0</span></div>
+                <div>Coins Collected: <span id="finalCoins">0</span></div>
+                <div>Best Score: <span id="finalHighScore">0</span></div>
+            </div>
+            <div class="button" id="restartBtn">Nochmal spielen</div>
+            <div class="button" id="menuBtn">Zurück zum Menü</div>
+        </div>
+
+        <div class="controls" id="gameControls">
+            <div class="control-btn" id="leftBtn">←</div>
+            <div class="control-btn" id="rightBtn">→</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
